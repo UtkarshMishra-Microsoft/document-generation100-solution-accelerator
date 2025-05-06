@@ -1,0 +1,90 @@
+name: Scheduled Dependabot Auto-Merge with Logs
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # every 5 mins
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  merge-dependabot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install GitHub CLI
+        run: |
+          sudo apt update
+          sudo apt install -y gh
+
+      - name: Fetch & Filter Dependabot PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔍 Fetching all Dependabot PRs targeting 'dependabotchanges'..."
+          > matched_prs.txt
+          pr_batch=$(gh pr list --state open --limit 50 --json number,title,author,baseRefName,url \
+            --jq '.[] | "\(.number)|\(.title)|\(.author.login)|\(.baseRefName)|\(.url)"')
+          while IFS='|' read -r number title author base url; do
+            author=$(echo "$author" | xargs)
+            base=$(echo "$base" | xargs)
+            if [[ "$author" == "app/dependabot" && "$base" == "dependabotchanges" ]]; then
+              echo "$url" >> matched_prs.txt
+              echo "✅ Matched PR #$number - $title"
+            else
+              echo "❌ Skipped PR #$number - $title (Author: $author, Base: $base)"
+            fi
+          done <<< "$pr_batch"
+          
+          echo "👉 Matched PRs:"
+          cat matched_prs.txt || echo "None"
+
+      - name: Approve and Auto-Merge if Mergeable
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ ! -s matched_prs.txt ]]; then
+            echo "⚠️ No matching PRs to process."
+            exit 0
+          fi
+          for pr_url in $(cat matched_prs.txt); do
+            echo "🔍 Checking mergeability for $pr_url"
+            pr_number=$(basename "$pr_url")
+            attempt=0
+            max_attempts=5
+            mergeable=""
+            while [[ $attempt -lt $max_attempts ]]; do
+              mergeable=$(gh pr view "$pr_number" --json mergeable --jq '.mergeable')
+              echo "🔁 Attempt $((attempt+1)): mergeable=$mergeable"
+              if [[ "$mergeable" == "MERGEABLE" ]]; then
+                echo "✅ PR is mergeable. Approving..."
+                gh pr review --approve "$pr_url" || echo "❗ Approval failed."
+                echo "🚀 Enabling auto-merge..."
+                
+                set -x  # Enable debugging
+                merge_output=$(gh pr merge --auto --merge "$pr_url" 2>&1)
+                set +x  # Disable debugging
+                
+                echo "$merge_output"  # Output the result of the merge attempt
+                
+                if [[ $? -ne 0 ]]; then
+                  echo "❗ Auto-merge failed. Output: $merge_output"
+                else
+                  echo "✅ Auto-merge succeeded!"
+                fi
+                break
+              elif [[ "$mergeable" == "CONFLICTING" ]]; then
+                echo "❌ Cannot merge due to conflicts. Skipping."
+                break
+              else
+                echo "🕒 Waiting for GitHub to determine mergeable status..."
+                sleep 10
+              fi
+              ((attempt++))
+            done
+          done
