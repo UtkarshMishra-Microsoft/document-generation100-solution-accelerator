@@ -57,7 +57,7 @@ jobs:
             mergeable=$(gh pr view "$pr_number" --json mergeable --jq '.mergeable')
             if [[ "$mergeable" == "CONFLICTING" ]]; then
               echo "❌ Merge conflicts detected. Rebasing PR #$pr_number"
-              gh pr rebase "$pr_url" || echo "❗ Rebase failed."
+              gh pr update-branch "$pr_url" || echo "❗ Rebase (update-branch) failed."
             fi
           done < matched_prs.txt
 
