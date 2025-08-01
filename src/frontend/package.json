@@ -57,7 +57,7 @@
     "@types/react-syntax-highlighter": "^15.5.13",
     "@types/testing-library__user-event": "^4.2.0",
     "@typescript-eslint/eslint-plugin": "^8.35.1",
-    "@typescript-eslint/parser": "^8.35.1",
+    "@typescript-eslint/parser": "^8.38.0",
     "@vitejs/plugin-react": "^4.6.0",
     "eslint": "^9.30.0",
     "eslint-config-prettier": "^10.1.5",
