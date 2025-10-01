@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest  # Use the latest Ubuntu runner
 
     steps:
-      - uses: actions/checkout@v4  # Checkout the repository
+      - uses: actions/checkout@v5  # Checkout the repository
 
       # Set up Python environment for Backend
       - name: Set up Python
@@ -62,7 +62,7 @@ jobs:
     runs-on: ubuntu-latest  # Use the latest Ubuntu runner
 
     steps:
-      - uses: actions/checkout@v4  # Checkout the repository
+      - uses: actions/checkout@v5  # Checkout the repository
 
       # Set up Node.js environment for Frontend
       - name: Set up Node.js
