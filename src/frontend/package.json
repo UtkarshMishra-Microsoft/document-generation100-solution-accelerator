@@ -76,7 +76,7 @@
     "lint-staged": "^16.1.2",
     "prettier": "^3.6.2",
     "react-test-renderer": "^19.1.0",
-    "string.prototype.replaceall": "^1.0.10",
+    "string.prototype.replaceall": "^1.0.11",
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
