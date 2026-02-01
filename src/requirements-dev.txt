@@ -2,7 +2,7 @@
 azure-ai-documentintelligence==1.0.2
 Markdown==3.8.2
 requests==2.32.4
-tqdm==4.67.1
+tqdm==4.67.2
 tiktoken
 langchain==0.3.27
 bs4==0.0.2
